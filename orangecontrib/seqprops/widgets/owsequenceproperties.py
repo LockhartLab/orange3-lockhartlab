@@ -23,6 +23,16 @@ KINDS = {PROTEIN: sp.PROTEIN, NUCLEOTIDE: sp.NUCLEOTIDE}
 MAX_NON_NUCLEOTIDE = 0.1
 
 
+def sequence_columns(domain):
+    """Text columns, plus categorical columns whose values all look like
+    sequences (so class labels such as 'Iris-setosa' are not offered)."""
+    text = [v for v in domain.metas if isinstance(v, StringVariable)]
+    categorical = [v for v in domain.variables + domain.metas
+                   if isinstance(v, DiscreteVariable)
+                   and all(sp.looks_like_sequence(sp.clean(x)) for x in v.values)]
+    return text + categorical
+
+
 def _rows(indices, limit=5):
     """1-based row numbers, as the Data Table shows them."""
     shown = ", ".join(str(i + 1) for i in indices[:limit])
@@ -30,7 +40,7 @@ def _rows(indices, limit=5):
 
 
 class OWSequenceProperties(OWWidget):
-    name = "Sequence Properties"
+    name = "Simple Sequence Properties"
     description = ("Compute physicochemical properties (molecular weight, pI, "
                    "hydropathy, GC content, CpG ratio, ...) of protein or "
                    "DNA/RNA sequences.")
@@ -113,7 +123,7 @@ class OWSequenceProperties(OWWidget):
         self.Error.no_sequence_column.clear()
         self.data = data
         self.sequence_var = None
-        candidates = self._sequence_columns(data.domain) if data is not None else []
+        candidates = sequence_columns(data.domain) if data is not None else []
         self.var_model[:] = candidates
         if data is not None:
             if not candidates:
@@ -124,16 +134,6 @@ class OWSequenceProperties(OWWidget):
                 self.sequence_var = (named or candidates)[0]
                 self.openContext(data.domain)
         self.commit.now()
-
-    @staticmethod
-    def _sequence_columns(domain):
-        """Text columns, plus categorical columns whose values all look like
-        sequences (so class labels such as 'Iris-setosa' are not offered)."""
-        text = [v for v in domain.metas if isinstance(v, StringVariable)]
-        categorical = [v for v in domain.variables + domain.metas
-                       if isinstance(v, DiscreteVariable)
-                       and all(sp.looks_like_sequence(sp.clean(x)) for x in v.values)]
-        return text + categorical
 
     def _sequences(self):
         var = self.sequence_var
@@ -151,7 +151,7 @@ class OWSequenceProperties(OWWidget):
         try:
             out = self._output()
         except Exception as ex:  # show the problem in the widget, never crash
-            log.exception("Sequence Properties failed")
+            log.exception("Simple Sequence Properties failed")
             self.Error.unexpected(f"{type(ex).__name__}: {ex}")
             out = None
         self.Outputs.data.send(out)

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- A sequence with overlapping k-mer windows, and the counts as bars -->
+  <rect x="4" y="8" width="8" height="8" rx="1.5" fill="#1b9e3e"/>
+  <rect x="14" y="8" width="8" height="8" rx="1.5" fill="#1f5fbf"/>
+  <rect x="24" y="8" width="8" height="8" rx="1.5" fill="#202020"/>
+  <rect x="34" y="8" width="8" height="8" rx="1.5" fill="#d62728"/>
+  <path d="M4 20 V23 H22 V20" fill="none" stroke="#5f6b73" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M14 4 V2 H32 V4" fill="none" stroke="#5f6b73" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M24 20 V23 H42 V20" fill="none" stroke="#5f6b73" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="6" y="34" width="8" height="10" rx="1" fill="#5f6b73"/>
+  <rect x="17" y="28" width="8" height="16" rx="1" fill="#5f6b73"/>
+  <rect x="28" y="38" width="8" height="6" rx="1" fill="#5f6b73"/>
+</svg>

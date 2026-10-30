@@ -3,9 +3,11 @@
 An add-on for the [Orange](https://orangedatamining.com/) data mining app.
 It adds two widgets in a **Lockhart Lab** section:
 
-- **Sequence Properties** turns protein or DNA/RNA sequences into numbers
+- **Simple Sequence Properties** turns protein or DNA/RNA sequences into numbers
   you can plot and use for machine learning: molecular weight, isoelectric
   point, hydropathy, GC content, melting temperature, and more.
+- **K-mer Bag of Words** counts the k-mers (overlapping pieces of length
+  k) in each sequence: one column per k-mer.
 - **Balance** makes any model train on class-balanced data, without
   spoiling Test & Score's cross-validation.
 
@@ -37,7 +39,8 @@ Quit Orange completely and open it again.
 
 **5. Check it worked.**
 The widget list on the left now has a **Lockhart Lab** section with the
-**Sequence Properties** and **Balance** widgets in it. 🎉
+**Simple Sequence Properties**, **K-mer Bag of Words** and **Balance**
+widgets in it. 🎉
 
 ### If something goes wrong
 
@@ -58,9 +61,9 @@ The widget list on the left now has a **Lockhart Lab** section with the
 
 1. Put a **File** widget on the canvas and open a CSV file with a column
    of sequences (ideally named `sequence`).
-2. Connect **File → Sequence Properties**, open the widget, and choose
+2. Connect **File → Simple Sequence Properties**, open the widget, and choose
    **Protein** or **DNA / RNA**. (Nothing comes out until you choose.)
-3. Connect **Sequence Properties → Data Table** to see the new columns.
+3. Connect **Simple Sequence Properties → Data Table** to see the new columns.
 4. Try **Scatter Plot**, **Box Plot**, or **Tree → Test & Score** next.
 
 Example files to try (on each file's GitHub page, click the
@@ -74,6 +77,18 @@ selected for proteins), the widget tells you instead of producing nonsense.
 Lower-case letters, spaces and a trailing `*` are fine; letters that aren't
 standard residues/bases (X, B, Z, N, ...) are skipped. A sequence that can't
 be processed gets blank values, and the widget names its row.
+
+### K-mer Bag of Words
+
+Connect **File → K-mer Bag of Words**. Set the range of **k** (for example
+1 to 2 gives every single letter and every pair) and choose **Counts** or
+**Frequencies** (the count divided by the number of k-mers of that length
+in the sequence, so long and short sequences compare fairly). There is one
+column for each k-mer that occurs in the data. Any letters are counted, so
+it works the same for protein, DNA and RNA.
+
+New data sent through the same workflow (for example a test file going to
+**Predictions**) gets the same k-mer columns.
 
 ### Balance: when one class is much bigger than the other
 
@@ -95,7 +110,7 @@ the test folds and the scores look better than they are.
 Balance also has a **Data** input and a **Model** output, for use with
 **Predictions**.
 
-## What Sequence Properties computes
+## What Simple Sequence Properties computes
 
 | Protein (11 columns) | DNA / RNA (7 columns) |
 |---|---|
@@ -133,7 +148,8 @@ points to the newest release.
     QT_QPA_PLATFORM=offscreen python -m unittest \
         orangecontrib.seqprops.widgets.tests.test_properties \
         orangecontrib.seqprops.widgets.tests.test_owsequenceproperties \
-        orangecontrib.seqprops.widgets.tests.test_owbalance
+        orangecontrib.seqprops.widgets.tests.test_owbalance \
+        orangecontrib.seqprops.widgets.tests.test_owkmers
 
 ## License
 
