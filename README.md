@@ -18,7 +18,7 @@ If you don't have Orange yet, download it from
 Go to the
 [**latest release**](https://github.com/LockhartLab/orange3-sequence-properties/releases/latest)
 page. Under **Assets**, click the file whose name ends in **`.whl`**
-(for example `orange3_sequence_properties-0.6.1-py3-none-any.whl`).
+(for example `orange3_sequence_properties-0.7.0-py3-none-any.whl`).
 Don't rename it.
 
 **2. Open the Add-ons window.**
@@ -33,14 +33,14 @@ checked. Click **OK** and wait until it finishes.
 Quit Orange completely and open it again.
 
 **5. Check it worked.**
-The widget list on the left now has a **Sequences** section with the
+The widget list on the left now has a **Lockhart Lab** section with the
 **Sequence Properties** widget in it. 🎉
 
 ### If something goes wrong
 
 | Problem | Fix |
 |---|---|
-| No **Sequences** section after restarting | Make sure you *quit* Orange (on a Mac: **Orange → Quit Orange**), not just closed the window, then open it again. |
+| No **Lockhart Lab** section after restarting | Make sure you *quit* Orange (on a Mac: **Orange → Quit Orange**), not just closed the window, then open it again. |
 | The install fails with an error | Check you're online: the add-on also downloads Biopython while it installs. Then try again. |
 | Nothing happens when you drop the file | Make sure the file name still ends in `.whl` and has no extra text like `(1)`. Delete duplicates and download it again. |
 | "Permission denied" or similar (often on school computers) | Orange was installed for all users. Ask whoever manages the computer, or reinstall Orange just for your account. |

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Orange3-Sequence-Properties"
-version = "0.6.1"
+version = "0.7.0"
 description = "Orange widget that computes properties of protein and DNA/RNA sequences."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -26,7 +26,7 @@ Download = "https://github.com/LockhartLab/orange3-sequence-properties/releases/
 seqprops = "orangecontrib.seqprops"
 
 [project.entry-points."orange.widgets"]
-Sequences = "orangecontrib.seqprops.widgets"
+"Lockhart Lab" = "orangecontrib.seqprops.widgets"
 
 [tool.setuptools.packages.find]
 include = ["orangecontrib*"]
