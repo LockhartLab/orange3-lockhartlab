@@ -23,7 +23,7 @@ If you don't have Orange yet, download it from
 Go to the
 [**latest release**](https://github.com/LockhartLab/orange3-sequence-properties/releases/latest)
 page. Under **Assets**, click the file whose name ends in **`.whl`**
-(for example `orange3_sequence_properties-0.7.0-py3-none-any.whl`).
+(for example `orange3_sequence_properties-0.8.0-py3-none-any.whl`).
 Don't rename it.
 
 **2. Open the Add-ons window.**
