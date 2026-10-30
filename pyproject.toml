@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Orange3-Sequence-Properties"
+version = "0.5.0"
+description = "Orange widget that computes properties of protein and DNA/RNA sequences."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["Orange3>=3.34", "biopython>=1.80"]
+keywords = ["orange3 add-on", "bioinformatics", "protein", "dna", "sequence"]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Education",
+]
+
+[project.urls]
+Homepage = "https://github.com/LockhartLab/orange3-sequence-properties"
+Download = "https://github.com/LockhartLab/orange3-sequence-properties/releases/latest"
+
+[project.entry-points."orange3.addon"]
+seqprops = "orangecontrib.seqprops"
+
+[project.entry-points."orange.widgets"]
+Sequences = "orangecontrib.seqprops.widgets"
+
+[tool.setuptools.packages.find]
+include = ["orangecontrib*"]
+namespaces = true
+
+[tool.setuptools.package-data]
+"orangecontrib.seqprops.widgets" = ["icons/*.svg"]
