@@ -62,4 +62,4 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" dist/*.whl \
             --title "$GITHUB_REF_NAME" \
-            --notes "Students: download the .whl file below and drag it onto Orange's Options → Add-ons… window. Full instructions: https://github.com/${{ github.repository }}#install-it-students"
+            --notes "Students: download the .whl file below and drag it onto Orange's Options → Add-ons… window. Full instructions: https://github.com/${{ github.repository }}#install-it"

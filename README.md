@@ -8,7 +8,7 @@ temperature, and more.
 
 ---
 
-## Install it (students)
+## Install it
 
 You need **Orange 3.34 or newer** and an **internet connection**.
 If you don't have Orange yet, download it from
