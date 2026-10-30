@@ -1,10 +1,13 @@
 # Orange3 Sequence Properties
 
 An add-on for the [Orange](https://orangedatamining.com/) data mining app.
-It adds one widget, **Sequence Properties**, that turns protein or DNA/RNA
-sequences into numbers you can plot and use for machine learning:
-molecular weight, isoelectric point, hydropathy, GC content, melting
-temperature, and more.
+It adds two widgets in a **Lockhart Lab** section:
+
+- **Sequence Properties** turns protein or DNA/RNA sequences into numbers
+  you can plot and use for machine learning: molecular weight, isoelectric
+  point, hydropathy, GC content, melting temperature, and more.
+- **Balance** makes any model train on class-balanced data, without
+  spoiling Test & Score's cross-validation.
 
 ---
 
@@ -34,7 +37,7 @@ Quit Orange completely and open it again.
 
 **5. Check it worked.**
 The widget list on the left now has a **Lockhart Lab** section with the
-**Sequence Properties** widget in it. 🎉
+**Sequence Properties** and **Balance** widgets in it. 🎉
 
 ### If something goes wrong
 
@@ -72,7 +75,27 @@ Lower-case letters, spaces and a trailing `*` are fine; letters that aren't
 standard residues/bases (X, B, Z, N, ...) are skipped. A sequence that can't
 be processed gets blank values, and the widget names its row.
 
-## What it computes
+### Balance: when one class is much bigger than the other
+
+With, say, three times more of one class, many models learn to predict the
+big class almost every time. Accuracy still looks good, but the model finds
+almost none of the small class.
+
+1. Connect any model to **Balance**, for example **SVM → Balance**.
+2. Choose **Downsample the larger class** (the default) or **Upsample the
+   smaller class**.
+3. Connect **Balance → Test & Score**, next to the plain model, and compare
+   the *Recall* of the small class.
+
+Balance resamples only the data the model is trained on. In Test & Score
+that is the training part of each cross-validation fold, so the test rows
+keep their real class ratio and no copied row ends up being tested.
+Don't resample the data *before* Test & Score instead: copies then land in
+the test folds and the scores look better than they are.
+Balance also has a **Data** input and a **Model** output, for use with
+**Predictions**.
+
+## What Sequence Properties computes
 
 | Protein (11 columns) | DNA / RNA (7 columns) |
 |---|---|
@@ -109,7 +132,8 @@ points to the newest release.
     python -m pip install dist/*.whl PyQt6 PyQt6-WebEngine
     QT_QPA_PLATFORM=offscreen python -m unittest \
         orangecontrib.seqprops.widgets.tests.test_properties \
-        orangecontrib.seqprops.widgets.tests.test_owsequenceproperties
+        orangecontrib.seqprops.widgets.tests.test_owsequenceproperties \
+        orangecontrib.seqprops.widgets.tests.test_owbalance
 
 ## License
 

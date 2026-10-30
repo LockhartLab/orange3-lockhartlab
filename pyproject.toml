@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "Orange3-Sequence-Properties"
 version = "0.7.0"
-description = "Orange widget that computes properties of protein and DNA/RNA sequences."
+description = "Orange widgets for protein and DNA/RNA sequence properties, and for class-balanced model training."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = ["Orange3>=3.34", "biopython>=1.80"]
-keywords = ["orange3 add-on", "bioinformatics", "protein", "dna", "sequence"]
+keywords = ["orange3 add-on", "bioinformatics", "protein", "dna", "sequence", "imbalanced", "resampling"]
 license = {text = "MIT"}
 classifiers = [
     "Programming Language :: Python :: 3",

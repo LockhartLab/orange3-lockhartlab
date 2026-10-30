@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- A balance scale with an equal number of red and blue dots on each pan -->
+  <rect x="22.5" y="9" width="3" height="31" rx="1.5" fill="#202020"/>
+  <rect x="15" y="39" width="18" height="4" rx="2" fill="#202020"/>
+  <rect x="6" y="11" width="36" height="3" rx="1.5" fill="#202020"/>
+  <circle cx="24" cy="9" r="3" fill="#202020"/>
+  <path d="M10 14 L4 27 M10 14 L16 27 M38 14 L32 27 M38 14 L44 27" stroke="#5f6b73" stroke-width="1.5" fill="none"/>
+  <path d="M3 27 H17 A7 5 0 0 1 3 27 Z" fill="#5f6b73"/>
+  <path d="M31 27 H45 A7 5 0 0 1 31 27 Z" fill="#5f6b73"/>
+  <circle cx="7" cy="24" r="2.6" fill="#d62728"/>
+  <circle cx="13" cy="24" r="2.6" fill="#d62728"/>
+  <circle cx="35" cy="24" r="2.6" fill="#1f5fbf"/>
+  <circle cx="41" cy="24" r="2.6" fill="#1f5fbf"/>
+</svg>
