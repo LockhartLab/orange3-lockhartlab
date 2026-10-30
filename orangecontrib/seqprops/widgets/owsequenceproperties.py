@@ -1,4 +1,7 @@
+import logging
+
 import numpy as np
+from AnyQt.QtWidgets import QButtonGroup, QRadioButton
 
 from Orange.data import Domain, ContinuousVariable, DiscreteVariable, StringVariable, Table
 from Orange.data.util import get_unique_names
@@ -9,8 +12,21 @@ from Orange.widgets.widget import Input, Msg, Output, OWWidget
 
 from orangecontrib.seqprops import properties as sp
 
-AUTO, PROTEIN, NUCLEOTIDE = range(3)
-TYPE_LABELS = ["Detect automatically", "Protein (amino acids)", "DNA / RNA (nucleotides)"]
+log = logging.getLogger(__name__)
+
+NOT_CHOSEN, PROTEIN, NUCLEOTIDE = -1, 0, 1
+TYPE_LABELS = ["Protein (amino acids)", "DNA / RNA (nucleotides)"]
+KINDS = {PROTEIN: sp.PROTEIN, NUCLEOTIDE: sp.NUCLEOTIDE}
+
+# With DNA/RNA selected, more letters than this that cannot be nucleotides
+# means the column almost certainly holds proteins.
+MAX_NON_NUCLEOTIDE = 0.1
+
+
+def _rows(indices, limit=5):
+    """1-based row numbers, as the Data Table shows them."""
+    shown = ", ".join(str(i + 1) for i in indices[:limit])
+    return shown + (", ..." if len(indices) > limit else "")
 
 
 class OWSequenceProperties(OWWidget):
@@ -28,15 +44,29 @@ class OWSequenceProperties(OWWidget):
     class Outputs:
         data = Output("Data", Table)
 
+    class Information(OWWidget.Information):
+        choose_type = Msg("Choose whether the sequences are protein or DNA / RNA.")
+
     class Error(OWWidget.Error):
         no_sequence_column = Msg("Input has no text column with sequences.")
+        protein_as_dna = Msg("These look like protein sequences, but DNA / RNA "
+                             "is selected. Choose Protein instead.")
+        unexpected = Msg("Something went wrong: {}")
 
     class Warning(OWWidget.Warning):
-        invalid = Msg("{} sequence(s) had no valid letters; their values are missing.")
+        dna_as_protein = Msg("These look like DNA / RNA sequences, but Protein "
+                             "is selected. Is that right?")
+        empty = Msg("{} sequence(s) had no usable letters (row {}); "
+                    "their values are blank.")
+        failed = Msg("{} sequence(s) could not be processed (row {}: {}); "
+                     "their values are blank.")
 
     settingsHandler = DomainContextHandler()
+    settings_version = 2
     sequence_var = ContextSetting(None)
-    sequence_type = Setting(AUTO)
+    # Saved with the workflow, but never remembered as the default for new
+    # widgets: every new widget asks which kind of sequence it gets.
+    sequence_type = Setting(NOT_CHOSEN, schema_only=True)
     include_properties = Setting(True)
     include_skew = Setting(True)
     auto_commit = Setting(True)
@@ -53,8 +83,13 @@ class OWSequenceProperties(OWWidget):
         gui.comboBox(box, self, "sequence_var", label="Column:",
                      orientation="horizontal", model=self.var_model,
                      callback=self.commit.deferred)
-        gui.radioButtons(box, self, "sequence_type", TYPE_LABELS,
-                         callback=self.commit.deferred)
+        # Built by hand because gui.radioButtons always selects a button.
+        self.type_buttons = QButtonGroup(self)
+        for i, label in enumerate(TYPE_LABELS):
+            button = QRadioButton(label)
+            box.layout().addWidget(button)
+            self.type_buttons.addButton(button, i)
+        self.type_buttons.buttonClicked.connect(self._on_type_clicked)
 
         box = gui.vBox(self.controlArea, "Output")
         gui.checkBox(box, self, "include_properties", "Physicochemical properties",
@@ -63,16 +98,33 @@ class OWSequenceProperties(OWWidget):
         self.dna_box = gui.vBox(self.controlArea, "DNA / RNA only")
         gui.checkBox(self.dna_box, self, "include_skew", "GC/AT skew, CpG ratio",
                      callback=self.commit.deferred)
+        self._sync_type_buttons()
 
         self.info_label = gui.widgetLabel(gui.vBox(self.controlArea, "Info"),
                                           "No data on input.")
 
         gui.auto_apply(self.buttonsArea, self, "auto_commit")
 
+    def _sync_type_buttons(self):
+        """Show the current `sequence_type`, including 'nothing selected'."""
+        if self.sequence_type in KINDS:
+            self.type_buttons.button(self.sequence_type).setChecked(True)
+        else:
+            self.type_buttons.setExclusive(False)
+            for button in self.type_buttons.buttons():
+                button.setChecked(False)
+            self.type_buttons.setExclusive(True)
+        self.dna_box.setEnabled(self.sequence_type != PROTEIN)
+
+    def _on_type_clicked(self, button):
+        self.sequence_type = self.type_buttons.id(button)
+        self._sync_type_buttons()
+        self.commit.deferred()
+
     @Inputs.data
     def set_data(self, data):
         self.closeContext()
-        self.Error.clear()
+        self.Error.no_sequence_column.clear()
         self.data = data
         self.sequence_var = None
         candidates = self._sequence_columns(data.domain) if data is not None else []
@@ -106,20 +158,46 @@ class OWSequenceProperties(OWWidget):
 
     @gui.deferred
     def commit(self):
+        self.Information.clear()
         self.Warning.clear()
+        self.Error.protein_as_dna.clear()
+        self.Error.unexpected.clear()
+        try:
+            out = self._output()
+        except Exception as ex:  # show the problem in the widget, never crash
+            log.exception("Sequence Properties failed")
+            self.Error.unexpected(f"{type(ex).__name__}: {ex}")
+            self.info_label.setText("No output: something went wrong\n"
+                                    "(details in the red message).")
+            out = None
+        self.Outputs.data.send(out)
+
+    def _output(self):
         if self.data is None or self.sequence_var is None:
-            self.dna_box.setEnabled(True)
             self.info_label.setText("No data on input.")
-            self.Outputs.data.send(None)
-            return
+            return None
+        if self.sequence_type not in KINDS:
+            self.Information.choose_type()
+            self.info_label.setText("Choose a sequence type above.")
+            return None
 
         sequences = self._sequences()
-        kind = {AUTO: sp.detect_type(sequences), PROTEIN: sp.PROTEIN,
-                NUCLEOTIDE: sp.NUCLEOTIDE}[self.sequence_type]
-        self.dna_box.setEnabled(kind == sp.NUCLEOTIDE)
-        names, new_x, n_invalid = sp.compute(sequences, kind, self._groups())
-        if n_invalid:
-            self.Warning.invalid(n_invalid)
+        kind = KINDS[self.sequence_type]
+        if kind == sp.NUCLEOTIDE \
+                and sp.non_nucleotide_fraction(sequences) > MAX_NON_NUCLEOTIDE:
+            self.Error.protein_as_dna()
+            self.info_label.setText("No output: these look like protein\n"
+                                    "sequences. Choose Protein above.")
+            return None
+        if kind == sp.PROTEIN and sp.detect_type(sequences) == sp.NUCLEOTIDE:
+            self.Warning.dna_as_protein()
+
+        names, new_x, empty, failed = sp.compute(sequences, kind, self._groups())
+        if empty:
+            self.Warning.empty(len(empty), _rows(empty))
+        if failed:
+            rows, reasons = zip(*failed)
+            self.Warning.failed(len(failed), _rows(list(rows)), reasons[0])
 
         domain = self.data.domain
         names = get_unique_names(domain, names)
@@ -133,7 +211,7 @@ class OWSequenceProperties(OWWidget):
         label = "protein" if kind == sp.PROTEIN else "DNA/RNA"
         self.info_label.setText(f"{len(sequences)} {label} sequences\n"
                                 f"{len(names)} columns added")
-        self.Outputs.data.send(out)
+        return out
 
     def _groups(self):
         return [group for group, on in ((sp.PROPERTIES, self.include_properties),
@@ -144,10 +222,18 @@ class OWSequenceProperties(OWWidget):
             return
         self.report_items((
             ("Sequence column", self.sequence_var.name),
-            ("Sequence type", TYPE_LABELS[self.sequence_type]),
+            ("Sequence type", TYPE_LABELS[self.sequence_type]
+             if self.sequence_type in KINDS else "not chosen"),
             ("Properties", self.include_properties),
             ("GC/AT skew, CpG ratio (DNA/RNA)", self.include_skew),
         ))
+
+    @classmethod
+    def migrate_settings(cls, settings, version):
+        if version is None or version < 2:
+            # Version 1 had 0 = detect automatically, 1 = protein, 2 = DNA/RNA.
+            old = settings.get("sequence_type")
+            settings["sequence_type"] = {1: PROTEIN, 2: NUCLEOTIDE}.get(old, NOT_CHOSEN)
 
 
 if __name__ == "__main__":  # pragma: no cover

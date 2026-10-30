@@ -48,6 +48,15 @@ def detect_type(sequences):
     return PROTEIN
 
 
+def non_nucleotide_fraction(sequences):
+    """Fraction of letters that cannot occur in DNA/RNA (A, C, G, T, U, N).
+    Close to 0 for DNA/RNA, typically above 0.5 for proteins."""
+    letters = "".join(sequences)
+    if not letters:
+        return 0.0
+    return sum(c not in NUCLEOTIDE_LETTERS for c in letters) / len(letters)
+
+
 def feature_names(kind, groups=(PROPERTIES, SKEW)):
     """Names of the requested groups, in a fixed order; groups that do not
     apply to `kind` are skipped."""
@@ -69,7 +78,9 @@ def _protein_properties(seq, raw):
 # --- DNA / RNA ---------------------------------------------------------------
 
 def _nucleotide_properties(seq, raw):
-    is_rna = "U" in seq and "T" not in seq
+    if "T" in seq and "U" in seq:
+        raise ValueError("contains both T and U")
+    is_rna = "U" in seq
     try:
         tm = mt.Tm_NN(seq.replace("U", "T"))
     except Exception:  # sequences too short or unusual for the NN tables
@@ -100,22 +111,28 @@ FUNCTIONS = {
 
 
 def compute(sequences, kind, groups=(PROPERTIES, SKEW)):
-    """Return (names, X, n_invalid) for already cleaned sequences.
+    """Return (names, X, empty, failed) for already cleaned sequences.
 
     Letters that are not standard residues/bases (X, B, Z, N, ...) are
-    ignored; sequences with no valid letters get missing values.
+    ignored. Sequences with no valid letters (row indices in `empty`) and
+    sequences whose calculation fails (`failed`: list of (row index,
+    reason)) get missing values instead of stopping the whole table.
     """
     groups = [g for g in FEATURES[kind] if g in groups]
     names = feature_names(kind, groups)
     valid = VALID_LETTERS[kind]
 
-    rows, n_invalid = [], 0
-    for raw in sequences:
+    rows, empty, failed = [], [], []
+    for i, raw in enumerate(sequences):
         seq = "".join(c for c in raw if c in valid)
         if not seq:
-            n_invalid += 1
+            empty.append(i)
             rows.append([np.nan] * len(names))
             continue
-        rows.append([value for g in groups for value in FUNCTIONS[kind][g](seq, raw)])
+        try:
+            rows.append([value for g in groups for value in FUNCTIONS[kind][g](seq, raw)])
+        except Exception as ex:  # one odd sequence must not break the table
+            failed.append((i, str(ex)))
+            rows.append([np.nan] * len(names))
     X = np.array(rows, dtype=float).reshape(len(sequences), len(names))
-    return names, X, n_invalid
+    return names, X, empty, failed
