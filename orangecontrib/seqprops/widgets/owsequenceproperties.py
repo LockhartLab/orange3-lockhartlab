@@ -67,8 +67,6 @@ class OWSequenceProperties(OWWidget):
     # Saved with the workflow, but never remembered as the default for new
     # widgets: every new widget asks which kind of sequence it gets.
     sequence_type = Setting(NOT_CHOSEN, schema_only=True)
-    include_properties = Setting(True)
-    include_skew = Setting(True)
     auto_commit = Setting(True)
 
     want_main_area = False
@@ -90,18 +88,7 @@ class OWSequenceProperties(OWWidget):
             box.layout().addWidget(button)
             self.type_buttons.addButton(button, i)
         self.type_buttons.buttonClicked.connect(self._on_type_clicked)
-
-        box = gui.vBox(self.controlArea, "Output")
-        gui.checkBox(box, self, "include_properties", "Physicochemical properties",
-                     callback=self.commit.deferred)
-
-        self.dna_box = gui.vBox(self.controlArea, "DNA / RNA only")
-        gui.checkBox(self.dna_box, self, "include_skew", "GC/AT skew, CpG ratio",
-                     callback=self.commit.deferred)
         self._sync_type_buttons()
-
-        self.info_label = gui.widgetLabel(gui.vBox(self.controlArea, "Info"),
-                                          "No data on input.")
 
         gui.auto_apply(self.buttonsArea, self, "auto_commit")
 
@@ -114,7 +101,6 @@ class OWSequenceProperties(OWWidget):
             for button in self.type_buttons.buttons():
                 button.setChecked(False)
             self.type_buttons.setExclusive(True)
-        self.dna_box.setEnabled(self.sequence_type != PROTEIN)
 
     def _on_type_clicked(self, button):
         self.sequence_type = self.type_buttons.id(button)
@@ -167,18 +153,14 @@ class OWSequenceProperties(OWWidget):
         except Exception as ex:  # show the problem in the widget, never crash
             log.exception("Sequence Properties failed")
             self.Error.unexpected(f"{type(ex).__name__}: {ex}")
-            self.info_label.setText("No output: something went wrong\n"
-                                    "(details in the red message).")
             out = None
         self.Outputs.data.send(out)
 
     def _output(self):
         if self.data is None or self.sequence_var is None:
-            self.info_label.setText("No data on input.")
             return None
         if self.sequence_type not in KINDS:
             self.Information.choose_type()
-            self.info_label.setText("Choose a sequence type above.")
             return None
 
         sequences = self._sequences()
@@ -186,13 +168,11 @@ class OWSequenceProperties(OWWidget):
         if kind == sp.NUCLEOTIDE \
                 and sp.non_nucleotide_fraction(sequences) > MAX_NON_NUCLEOTIDE:
             self.Error.protein_as_dna()
-            self.info_label.setText("No output: these look like protein\n"
-                                    "sequences. Choose Protein above.")
             return None
         if kind == sp.PROTEIN and sp.detect_type(sequences) == sp.NUCLEOTIDE:
             self.Warning.dna_as_protein()
 
-        names, new_x, empty, failed = sp.compute(sequences, kind, self._groups())
+        names, new_x, empty, failed = sp.compute(sequences, kind)
         if empty:
             self.Warning.empty(len(empty), _rows(empty))
         if failed:
@@ -207,15 +187,7 @@ class OWSequenceProperties(OWWidget):
                                self.data.Y, self.data.metas, self.data.W,
                                attributes=self.data.attributes)
         out.name = self.data.name
-
-        label = "protein" if kind == sp.PROTEIN else "DNA/RNA"
-        self.info_label.setText(f"{len(sequences)} {label} sequences\n"
-                                f"{len(names)} columns added")
         return out
-
-    def _groups(self):
-        return [group for group, on in ((sp.PROPERTIES, self.include_properties),
-                                        (sp.SKEW, self.include_skew)) if on]
 
     def send_report(self):
         if self.data is None:
@@ -224,8 +196,6 @@ class OWSequenceProperties(OWWidget):
             ("Sequence column", self.sequence_var.name),
             ("Sequence type", TYPE_LABELS[self.sequence_type]
              if self.sequence_type in KINDS else "not chosen"),
-            ("Properties", self.include_properties),
-            ("GC/AT skew, CpG ratio (DNA/RNA)", self.include_skew),
         ))
 
     @classmethod

@@ -66,6 +66,14 @@ class TestOWSequenceProperties(WidgetTest):
                 stored_settings={"sequence_type": old, "__version__": 1})
             self.assertEqual(w.sequence_type, new, f"old value {old}")
 
+    def test_old_workflows_with_removed_checkboxes(self):
+        w = self.create_widget(
+            OWSequenceProperties,
+            stored_settings={"sequence_type": NUCLEOTIDE, "include_properties": False,
+                             "include_skew": False, "__version__": 2})
+        self.send_signal(w.Inputs.data, make_table(["ATGCGCGATAT"]), widget=w)
+        self.assertEqual(len(self.get_output(w.Outputs.data, widget=w).domain.attributes), 7)
+
     def test_protein(self):
         data = make_table(["MKTAYIAKQRQISFVKSHFSRQ", "gigkflhsakkfgkafvgeimns*"])
         self.send_signal(self.widget.Inputs.data, data)
@@ -75,20 +83,14 @@ class TestOWSequenceProperties(WidgetTest):
         self.assertEqual(out.get_column("length").tolist(), [22, 23])
         self.assertEqual(out.domain.class_var, data.domain.class_var)
         self.assertEqual(out.domain.metas, data.domain.metas)
-        self.assertFalse(self.widget.dna_box.isEnabled())
 
-    def test_nucleotide_and_options(self):
+    def test_nucleotide(self):
         data = make_table(["ATGCGCGATAT", "AUGGCCAUUGUAAUG"])
         self.send_signal(self.widget.Inputs.data, data)
         self.choose(NUCLEOTIDE)
         out = self.output()
         self.assertEqual([v.name for v in out.domain.attributes][:2], ["length", "GC %"])
         self.assertEqual(len(out.domain.attributes), 7)
-        self.assertTrue(self.widget.dna_box.isEnabled())
-
-        self.widget.controls.include_skew.click()
-        self.widget.commit.now()
-        self.assertEqual(len(self.output().domain.attributes), 4)
 
     def test_protein_read_as_dna_is_an_error_not_a_crash(self):
         """The bug report: protein data with DNA / RNA selected."""

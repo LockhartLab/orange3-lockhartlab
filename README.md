@@ -80,9 +80,9 @@ be processed gets blank values, and the widget names its row.
 | molecular weight | GC % |
 | isoelectric point | molecular weight |
 | charge at pH 7 | melting temp (C) |
-| GRAVY (hydropathy) | GC skew *(optional)* |
-| aromaticity | AT skew *(optional)* |
-| instability index | CpG obs/exp *(optional)* |
+| GRAVY (hydropathy) | GC skew |
+| aromaticity | AT skew |
+| instability index | CpG obs/exp |
 | helix / turn / sheet fraction | |
 | extinction coeff (reduced) | |
 
