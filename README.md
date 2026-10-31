@@ -104,8 +104,9 @@ There are two ways to use it. In both, choose **Downsample the larger
 class** (the default) or **Upsample the smaller class**.
 
 - **One Balance for all models:** connect **Balance → Test & Score**. Orange
-  connects it to Test & Score's **Preprocessor** input, and every model in
-  that Test & Score is then trained on balanced data. Simplest; to compare
+  asks which connection to make: link **Preprocessor** to **Preprocessor**
+  (remove the Learner link it suggests). Every model in that Test & Score
+  is then trained on balanced data. Simplest; to compare
   with unbalanced models, use a second Test & Score without Balance.
 - **One Balance per model:** connect a model to Balance, for example
   **SVM → Balance → Test & Score**, next to the plain SVM, and compare
