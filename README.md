@@ -21,7 +21,7 @@ If you don't have Orange yet, download it from
 
 **1. Download the add-on file.**
 Go to the
-[**latest release**](https://github.com/LockhartLab/orange3-sequence-properties/releases/latest)
+[**latest release**](https://github.com/LockhartLab/orange3-lockhartlab/releases/latest)
 page. Under **Assets**, click the file whose name ends in **`.whl`**
 (for example `orange3_lockhartlab-0.9.0-py3-none-any.whl`).
 Don't rename it.

@@ -19,8 +19,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/LockhartLab/orange3-sequence-properties"
-Download = "https://github.com/LockhartLab/orange3-sequence-properties/releases/latest"
+Homepage = "https://github.com/LockhartLab/orange3-lockhartlab"
+Download = "https://github.com/LockhartLab/orange3-lockhartlab/releases/latest"
 
 [project.entry-points."orange3.addon"]
 seqprops = "orangecontrib.seqprops"
