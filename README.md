@@ -1,7 +1,7 @@
-# Orange3 Sequence Properties
+# orange3-lockhartlab
 
 An add-on for the [Orange](https://orangedatamining.com/) data mining app.
-It adds two widgets in a **Lockhart Lab** section:
+It adds three widgets in a **Lockhart Lab** section:
 
 - **Simple Sequence Properties** turns protein or DNA/RNA sequences into numbers
   you can plot and use for machine learning: molecular weight, isoelectric
@@ -23,7 +23,7 @@ If you don't have Orange yet, download it from
 Go to the
 [**latest release**](https://github.com/LockhartLab/orange3-sequence-properties/releases/latest)
 page. Under **Assets**, click the file whose name ends in **`.whl`**
-(for example `orange3_sequence_properties-0.8.0-py3-none-any.whl`).
+(for example `orange3_lockhartlab-0.9.0-py3-none-any.whl`).
 Don't rename it.
 
 **2. Open the Add-ons window.**
@@ -31,7 +31,7 @@ Start Orange and choose **Options → Add-ons…** from the menu.
 
 **3. Drag the file in.**
 Drag the `.whl` file from your Downloads folder onto the Add-ons window.
-A line called **Orange3-Sequence-Properties** appears with its box
+A line called **orange3-lockhartlab** appears with its box
 checked. Click **OK** and wait until it finishes.
 
 **4. Restart Orange.**
@@ -53,7 +53,11 @@ widgets in it. 🎉
 | Orange is older than 3.34 | Download and install the newest Orange first. |
 
 **Updating:** download the newer `.whl` file and drag it in the same way.
-**Removing:** in **Options → Add-ons…**, uncheck *Orange3-Sequence-Properties* and click **OK**.
+**Had the earlier version, called *Orange3-Sequence-Properties*?** Remove it first:
+in **Options → Add-ons…** uncheck it, click **OK** and restart Orange. Then install
+*orange3-lockhartlab* as above. (Removing the old one *after* installing the new
+one would delete files the new one needs.)
+**Removing:** in **Options → Add-ons…**, uncheck *orange3-lockhartlab* and click **OK**.
 
 ---
 
