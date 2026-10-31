@@ -1,13 +1,15 @@
-"""A learner that trains another learner on class-balanced data.
+"""Class balancing that touches only the data a model is trained on.
 
-Only the data the learner is trained on is resampled. Inside Test & Score's
-cross-validation that is the training part of each fold, so the test rows
-keep their real class ratio and no copied row can end up in a test fold.
+`BalancedLearner` wraps one learner. `Balance` is a preprocessor: given to
+Test & Score's Preprocessor input, it balances the training part of each
+fold for every model there. Either way the test rows keep their real class
+ratio and no copied row can end up in a test fold.
 """
 
 import numpy as np
 
 from Orange.base import Learner, Model
+from Orange.preprocess.preprocess import Preprocess
 
 DOWN, UP = 0, 1
 METHOD_NAMES = {DOWN: "downsampled", UP: "upsampled"}
@@ -28,6 +30,27 @@ def balanced_rows(y, method, rng):
     return np.sort(rows)
 
 
+def _check_target(domain):
+    if len(domain.class_vars) != 1 or not domain.class_var.is_discrete:
+        return "Balancing needs a single categorical target."
+    return None
+
+
+class Balance(Preprocess):
+    """Resample a table so that all classes are equally frequent."""
+
+    def __init__(self, method=DOWN, random_state=0):
+        self.method = method
+        self.random_state = random_state
+
+    def __call__(self, data):
+        reason = _check_target(data.domain)
+        if reason is not None:
+            raise ValueError(reason)
+        rng = np.random.default_rng(self.random_state)
+        return data[balanced_rows(data.Y, self.method, rng)]
+
+
 class BalancedLearner(Learner):
     """Wraps `base_learner`; each time it is trained, it first resamples
     the training data so that all classes are equally frequent."""
@@ -42,10 +65,7 @@ class BalancedLearner(Learner):
         self.name = f"{base_learner.name} ({METHOD_NAMES[method]})"
 
     def incompatibility_reason(self, domain):
-        if len(domain.class_vars) != 1 or not domain.class_var.is_discrete:
-            return "Balancing needs a single categorical target."
-        return self.base_learner.incompatibility_reason(domain)
+        return _check_target(domain) or self.base_learner.incompatibility_reason(domain)
 
     def fit_storage(self, data):
-        rng = np.random.default_rng(self.random_state)
-        return self.base_learner(data[balanced_rows(data.Y, self.method, rng)])
+        return self.base_learner(Balance(self.method, self.random_state)(data))

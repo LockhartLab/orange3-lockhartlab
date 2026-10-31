@@ -23,7 +23,7 @@ If you don't have Orange yet, download it from
 Go to the
 [**latest release**](https://github.com/LockhartLab/orange3-lockhartlab/releases/latest)
 page. Under **Assets**, click the file whose name ends in **`.whl`**
-(for example `orange3_lockhartlab-0.9.0-py3-none-any.whl`).
+(for example `orange3_lockhartlab-0.10.0-py3-none-any.whl`).
 Don't rename it.
 
 **2. Open the Add-ons window.**
@@ -100,19 +100,24 @@ With, say, three times more of one class, many models learn to predict the
 big class almost every time. Accuracy still looks good, but the model finds
 almost none of the small class.
 
-1. Connect any model to **Balance**, for example **SVM → Balance**.
-2. Choose **Downsample the larger class** (the default) or **Upsample the
-   smaller class**.
-3. Connect **Balance → Test & Score**, next to the plain model, and compare
-   the *Recall* of the small class.
+There are two ways to use it. In both, choose **Downsample the larger
+class** (the default) or **Upsample the smaller class**.
+
+- **One Balance for all models:** connect **Balance → Test & Score**. Orange
+  connects it to Test & Score's **Preprocessor** input, and every model in
+  that Test & Score is then trained on balanced data. Simplest; to compare
+  with unbalanced models, use a second Test & Score without Balance.
+- **One Balance per model:** connect a model to Balance, for example
+  **SVM → Balance → Test & Score**, next to the plain SVM, and compare
+  the *Recall* of the small class side by side.
 
 Balance resamples only the data the model is trained on. In Test & Score
 that is the training part of each cross-validation fold, so the test rows
 keep their real class ratio and no copied row ends up being tested.
 Don't resample the data *before* Test & Score instead: copies then land in
 the test folds and the scores look better than they are.
-Balance also has a **Data** input and a **Model** output, for use with
-**Predictions**.
+In the per-model setup, Balance also has a **Data** input and a **Model**
+output, for use with **Predictions**.
 
 ## What Simple Sequence Properties computes
 

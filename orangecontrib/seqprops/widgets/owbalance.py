@@ -1,11 +1,12 @@
 from Orange.data import Table
 from Orange.modelling import Learner
+from Orange.preprocess.preprocess import Preprocess
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
-from Orange.widgets.widget import Input
+from Orange.widgets.widget import Input, Output
 
-from orangecontrib.seqprops.balance import BalancedLearner, DOWN, UP, METHOD_NAMES
+from orangecontrib.seqprops.balance import Balance, BalancedLearner, DOWN, UP, METHOD_NAMES
 
 METHOD_LABELS = {DOWN: "Downsample the larger class",
                  UP: "Upsample the smaller class"}
@@ -13,9 +14,9 @@ METHOD_LABELS = {DOWN: "Downsample the larger class",
 
 class OWBalance(OWBaseLearner):
     name = "Balance"
-    description = ("Wraps a model so that it trains on class-balanced data. "
-                   "Only the training data is resampled, so Test & Score's "
-                   "cross-validation stays honest.")
+    description = ("Train models on class-balanced data: wrap one model, or "
+                   "connect the Preprocessor output to Test & Score to balance "
+                   "every model there. Only training data is resampled.")
     icon = "icons/Balance.svg"
     priority = 20
     keywords = ("balance, imbalance, imbalanced, class, resample, downsample, "
@@ -28,6 +29,11 @@ class OWBalance(OWBaseLearner):
 
     class Inputs(OWBaseLearner.Inputs):
         base_learner = Input("Base Learner", Learner)
+
+    class Outputs(OWBaseLearner.Outputs):
+        # Not tied to a model: to Test & Score's Preprocessor input, it
+        # balances the training part of each fold for all models there.
+        preprocessor = Output("Preprocessor", Preprocess)
 
     def __init__(self):
         super().__init__()
@@ -53,6 +59,10 @@ class OWBalance(OWBaseLearner):
     def _method_changed(self):
         self._set_default_name()
         self.apply()
+
+    def update_learner(self):
+        super().update_learner()
+        self.Outputs.preprocessor.send(Balance(self.method))
 
     def create_learner(self):
         if self.base_learner is None:

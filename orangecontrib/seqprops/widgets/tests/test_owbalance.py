@@ -7,7 +7,9 @@ from Orange.data import Domain, ContinuousVariable, DiscreteVariable, Table
 from Orange.evaluation import CrossValidation, Recall
 from Orange.widgets.tests.base import WidgetTest
 
-from orangecontrib.seqprops.balance import BalancedLearner, balanced_rows, DOWN, UP
+from Orange.widgets.evaluate.owtestandscore import OWTestAndScore
+
+from orangecontrib.seqprops.balance import Balance, BalancedLearner, balanced_rows, DOWN, UP
 from orangecontrib.seqprops.widgets.owbalance import OWBalance
 
 
@@ -31,9 +33,9 @@ class RecordingLearner(KNNLearner):
     """kNN that remembers the class counts it was trained on."""
     seen = []
 
-    def fit_storage(self, data):
-        RecordingLearner.seen.append(np.bincount(data.Y.astype(int), minlength=2))
-        return super().fit_storage(data)
+    def fit(self, X, Y, W=None):
+        RecordingLearner.seen.append(np.bincount(Y.astype(int).ravel(), minlength=2))
+        return super().fit(X, Y, W)
 
 
 class TestBalancedRows(unittest.TestCase):
@@ -60,6 +62,7 @@ class TestBalancedLearner(unittest.TestCase):
         res = CrossValidation(k=5, stratified=True, random_state=0)(
             data, [BalancedLearner(RecordingLearner(), DOWN)])
         # every fold trained on equal classes...
+        self.assertEqual(len(RecordingLearner.seen), 5)
         for counts in RecordingLearner.seen:
             self.assertEqual(counts[0], counts[1])
         # ...but every original row was tested once, at the real 30 / 90 ratio
@@ -68,6 +71,7 @@ class TestBalancedLearner(unittest.TestCase):
         RecordingLearner.seen = []
         CrossValidation(k=5, stratified=True, random_state=0)(
             data, [BalancedLearner(RecordingLearner(), UP)])
+        self.assertEqual(len(RecordingLearner.seen), 5)
         for counts in RecordingLearner.seen:
             self.assertEqual(counts.tolist(), [72, 72])
 
@@ -94,6 +98,29 @@ class TestBalancedLearner(unittest.TestCase):
         svm = named(SVMLearner(), "SVM")
         self.assertEqual(BalancedLearner(svm, DOWN).name, "SVM (downsampled)")
         self.assertEqual(BalancedLearner(svm, UP).name, "SVM (upsampled)")
+
+
+class TestBalancePreprocessor(unittest.TestCase):
+    def test_balances_table(self):
+        data = imbalanced()
+        self.assertEqual(np.bincount(Balance(DOWN)(data).Y.astype(int)).tolist(), [30, 30])
+        self.assertEqual(np.bincount(Balance(UP)(data).Y.astype(int)).tolist(), [90, 90])
+
+    def test_rejects_numeric_target(self):
+        with self.assertRaises(ValueError):
+            Balance()(Table("housing"))
+
+    def test_cross_validation_balances_only_training_folds(self):
+        """As Test & Score's Preprocessor: every model trains on balanced
+        folds, every original row is tested once at the real ratio."""
+        data = imbalanced()
+        RecordingLearner.seen = []
+        res = CrossValidation(k=5, stratified=True, random_state=0)(
+            data, [RecordingLearner(), RecordingLearner()], preprocessor=Balance(UP))
+        self.assertEqual(len(RecordingLearner.seen), 10)
+        for counts in RecordingLearner.seen:
+            self.assertEqual(counts.tolist(), [72, 72])
+        self.assertEqual(np.bincount(res.actual.astype(int)).tolist(), [30, 90])
 
 
 class TestOWBalance(WidgetTest):
@@ -127,6 +154,30 @@ class TestOWBalance(WidgetTest):
         self.send_signal(self.widget.Inputs.data, Table("housing"))
         self.assertTrue(self.widget.Error.data_error.is_shown())
         self.assertIsNone(self.get_output(self.widget.Outputs.model))
+
+    def test_preprocessor_output_without_learner(self):
+        self.widget.apply()
+        pp = self.get_output(self.widget.Outputs.preprocessor)
+        self.assertIsInstance(pp, Balance)
+        self.assertEqual(pp.method, DOWN)
+        self.widget.controls.method.buttons[UP].click()
+        self.assertEqual(self.get_output(self.widget.Outputs.preprocessor).method, UP)
+
+    def test_one_balance_for_all_models_in_test_and_score(self):
+        self.widget.apply()
+        data = imbalanced()
+        ts = self.create_widget(OWTestAndScore)
+        self.send_signal(ts.Inputs.train_data, data, widget=ts)
+        self.send_signal(ts.Inputs.learner, named(SVMLearner(), "SVM"), 0, widget=ts)
+        self.send_signal(ts.Inputs.learner, named(KNNLearner(), "kNN"), 1, widget=ts)
+        self.send_signal(ts.Inputs.preprocessor,
+                         self.get_output(self.widget.Outputs.preprocessor), widget=ts)
+        self.process_events(lambda: self.get_output(ts.Outputs.evaluations_results, widget=ts) is not None)
+        res = self.get_output(ts.Outputs.evaluations_results, widget=ts)
+        self.assertEqual(np.bincount(res.actual.astype(int)).tolist(), [30, 90])
+        plain = CrossValidation(k=10, stratified=True, random_state=0)(
+            data, [SVMLearner()])
+        self.assertGreater(Recall(res, target=0)[0], Recall(plain, target=0)[0] + 0.2)
 
     def test_removing_learner(self):
         self.send_signal(self.widget.Inputs.base_learner, SVMLearner())
