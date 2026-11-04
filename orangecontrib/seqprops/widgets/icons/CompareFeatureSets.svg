@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- Three feature sets (column groups) feeding one score table -->
+  <rect x="3" y="5" width="4" height="16" rx="1" fill="#1b9e3e"/>
+  <rect x="9" y="5" width="4" height="16" rx="1" fill="#1b9e3e"/>
+  <rect x="18" y="5" width="4" height="16" rx="1" fill="#1f5fbf"/>
+  <rect x="24" y="5" width="4" height="16" rx="1" fill="#1f5fbf"/>
+  <rect x="33" y="5" width="4" height="16" rx="1" fill="#d62728"/>
+  <rect x="39" y="5" width="4" height="16" rx="1" fill="#d62728"/>
+  <path d="M8 24 L24 29 M23 24 L24 29 M38 24 L24 29" stroke="#5f6b73" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <rect x="6" y="31" width="36" height="14" rx="2" fill="none" stroke="#202020" stroke-width="2"/>
+  <path d="M6 36 H42 M6 40.5 H42 M20 31 V45" stroke="#202020" stroke-width="1.5"/>
+</svg>

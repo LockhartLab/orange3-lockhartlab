@@ -1,7 +1,7 @@
 # orange3-lockhartlab
 
 An add-on for the [Orange](https://orangedatamining.com/) data mining app.
-It adds three widgets in a **Lockhart Lab** section:
+It adds four widgets in a **Lockhart Lab** section:
 
 - **Simple Sequence Properties** turns protein or DNA/RNA sequences into numbers
   you can plot and use for machine learning: molecular weight, isoelectric
@@ -10,6 +10,8 @@ It adds three widgets in a **Lockhart Lab** section:
   k) in each sequence: one column per k-mer.
 - **Balance** makes any model train on class-balanced data, without
   spoiling Test & Score's cross-validation.
+- **Compare Feature Sets** cross-validates every model on every feature set
+  (for example several Select Columns) and scores them all in one table.
 
 ---
 
@@ -23,7 +25,7 @@ If you don't have Orange yet, download it from
 Go to the
 [**latest release**](https://github.com/LockhartLab/orange3-lockhartlab/releases/latest)
 page. Under **Assets**, click the file whose name ends in **`.whl`**
-(for example `orange3_lockhartlab-0.10.0-py3-none-any.whl`).
+(for example `orange3_lockhartlab-0.11.0-py3-none-any.whl`).
 Don't rename it.
 
 **2. Open the Add-ons window.**
@@ -39,8 +41,8 @@ Quit Orange completely and open it again.
 
 **5. Check it worked.**
 The widget list on the left now has a **Lockhart Lab** section with the
-**Simple Sequence Properties**, **K-mer Bag of Words** and **Balance**
-widgets in it. 🎉
+**Simple Sequence Properties**, **K-mer Bag of Words**, **Balance** and
+**Compare Feature Sets** widgets in it. 🎉
 
 ### If something goes wrong
 
@@ -120,6 +122,30 @@ the test folds and the scores look better than they are.
 In the per-model setup, Balance also has a **Data** input and a **Model**
 output, for use with **Predictions**.
 
+### Compare Feature Sets: which columns work best?
+
+To find out which features predict best (say, descriptors, amino acid
+fractions, or both), make one **Select Columns** per feature set and connect
+them all to **Compare Feature Sets**, together with your models:
+
+    Data ─┬─ Select Columns "Descriptors" ─┐
+          ├─ Select Columns "AAC"         ─┼─→ Compare Feature Sets ─→ Confusion Matrix, ROC Analysis
+          └─ Select Columns "Both"        ─┘          ↑
+                                       Logistic Regression, SVM, Tree, ...
+
+Every model is cross-validated on every set, with the same folds, and the
+table has one row per pair, such as *SVM [AAC]*. Each set is named after
+its widget's label on the canvas, so rename the Select Columns to name the
+sets. The scores are the same as a Test & Score with the same number of
+folds would give for that set. Choose the target class above the table to
+see, for example, the recall of the small class; click a column header to
+sort.
+
+All sets must have the same rows: split the data first, then select columns.
+For balanced training, connect **Balance**'s Preprocessor output to the
+widget's Preprocessor input. Pick the best set and model here, then check
+them once on held-out data with **Test & Score** (*Test on test data*).
+
 ## What Simple Sequence Properties computes
 
 | Protein (11 columns) | DNA / RNA (7 columns) |
@@ -159,7 +185,8 @@ points to the newest release.
         orangecontrib.seqprops.widgets.tests.test_properties \
         orangecontrib.seqprops.widgets.tests.test_owsequenceproperties \
         orangecontrib.seqprops.widgets.tests.test_owbalance \
-        orangecontrib.seqprops.widgets.tests.test_owkmers
+        orangecontrib.seqprops.widgets.tests.test_owkmers \
+        orangecontrib.seqprops.widgets.tests.test_owcomparefeaturesets
 
 ## License
 
