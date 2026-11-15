@@ -38,6 +38,7 @@ jobs:
           orangecontrib.seqprops.widgets.tests.test_owbalance
           orangecontrib.seqprops.widgets.tests.test_owkmers
           orangecontrib.seqprops.widgets.tests.test_owcomparefeaturesets
+          orangecontrib.seqprops.widgets.tests.test_regressions
 
   release:
     # Runs only for version tags like v0.6.0, after the tests pass.

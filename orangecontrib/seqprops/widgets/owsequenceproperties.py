@@ -3,14 +3,15 @@ import logging
 import numpy as np
 from AnyQt.QtWidgets import QButtonGroup, QRadioButton
 
-from Orange.data import Domain, ContinuousVariable, DiscreteVariable, StringVariable, Table
-from Orange.data.util import get_unique_names
+from Orange.data import Domain, DiscreteVariable, StringVariable, Table
+from Orange.data.util import hstack
 from Orange.widgets import gui
 from Orange.widgets.settings import ContextSetting, DomainContextHandler, Setting
 from Orange.widgets.utils.itemmodels import VariableListModel
 from Orange.widgets.widget import Input, Msg, Output, OWWidget
 
 from orangecontrib.seqprops import properties as sp
+from orangecontrib.seqprops.descriptors import descriptor_variables
 
 log = logging.getLogger(__name__)
 
@@ -172,7 +173,7 @@ class OWSequenceProperties(OWWidget):
         if kind == sp.PROTEIN and sp.detect_type(sequences) == sp.NUCLEOTIDE:
             self.Warning.dna_as_protein()
 
-        names, new_x, empty, failed = sp.compute(sequences, kind)
+        _, new_x, empty, failed = sp.compute(sequences, kind)
         if empty:
             self.Warning.empty(len(empty), _rows(empty))
         if failed:
@@ -180,12 +181,12 @@ class OWSequenceProperties(OWWidget):
             self.Warning.failed(len(failed), _rows(list(rows)), reasons[0])
 
         domain = self.data.domain
-        names = get_unique_names(domain, names)
-        new_domain = Domain(list(domain.attributes) + [ContinuousVariable(n) for n in names],
+        new_vars = descriptor_variables(self.sequence_var, kind, domain)
+        new_domain = Domain(list(domain.attributes) + new_vars,
                             domain.class_vars, domain.metas)
-        out = Table.from_numpy(new_domain, np.hstack([self.data.X, new_x]),
+        out = Table.from_numpy(new_domain, hstack([self.data.X, new_x]),
                                self.data.Y, self.data.metas, self.data.W,
-                               attributes=self.data.attributes)
+                               attributes=self.data.attributes, ids=self.data.ids)
         out.name = self.data.name
         return out
 

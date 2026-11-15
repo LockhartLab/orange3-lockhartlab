@@ -28,6 +28,14 @@ def rows_problem(tables):
     return None
 
 
+def with_known_targets(tables):
+    """Keep the same labeled rows in each already aligned feature set."""
+    if not tables:
+        return []
+    known = ~np.isnan(tables[0].Y)
+    return list(tables) if known.all() else [table[known] for table in tables]
+
+
 def can_stratify(data, k):
     """Whether every class has at least `k` rows (needed to stratify)."""
     if not data.domain.has_discrete_class:
@@ -38,7 +46,8 @@ def can_stratify(data, k):
 
 def evaluate(tables, learners, preprocessor=None, k=5, stratified=True,
              callback=None):
-    """Cross-validate every learner on every table; one Results per table."""
+    """Cross-validate every learner on labeled rows; one Results per table."""
+    tables = with_known_targets(tables)
     results = []
     for i, table in enumerate(tables):
         def progress(p, i=i):

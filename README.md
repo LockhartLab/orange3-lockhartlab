@@ -25,7 +25,7 @@ If you don't have Orange yet, download it from
 Go to the
 [**latest release**](https://github.com/LockhartLab/orange3-lockhartlab/releases/latest)
 page. Under **Assets**, click the file whose name ends in **`.whl`**
-(for example `orange3_lockhartlab-0.11.0-py3-none-any.whl`).
+(for example `orange3_lockhartlab-0.11.1-py3-none-any.whl`).
 Don't rename it.
 
 **2. Open the Add-ons window.**
@@ -186,7 +186,8 @@ points to the newest release.
         orangecontrib.seqprops.widgets.tests.test_owsequenceproperties \
         orangecontrib.seqprops.widgets.tests.test_owbalance \
         orangecontrib.seqprops.widgets.tests.test_owkmers \
-        orangecontrib.seqprops.widgets.tests.test_owcomparefeaturesets
+        orangecontrib.seqprops.widgets.tests.test_owcomparefeaturesets \
+        orangecontrib.seqprops.widgets.tests.test_regressions
 
 ## License
 

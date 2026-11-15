@@ -54,6 +54,8 @@ class OWCompareFeatureSets(OWWidget, ConcurrentWidgetMixin):
     class Warning(OWWidget.Warning):
         cant_stratify = Msg("Cannot stratify: a class has fewer than {} rows.")
         learner_failed = Msg("{}")
+        missing_targets = Msg("{} row(s) with unknown target values were excluded "
+                              "from evaluation.")
 
     class Information(OWWidget.Information):
         need_inputs = Msg("Connect one or more feature sets (Data) and models (Learner).")
@@ -168,6 +170,10 @@ class OWCompareFeatureSets(OWWidget, ConcurrentWidgetMixin):
             self.Error.rows(problem)
             self._finish()
             return
+        n_rows = len(tables[0])
+        tables = fs.with_known_targets(tables)
+        if len(tables[0]) < n_rows:
+            self.Warning.missing_targets(n_rows - len(tables[0]))
         k = self.NFolds[self.n_folds]
         if len(tables[0]) < k:
             self.Error.too_many_folds()
