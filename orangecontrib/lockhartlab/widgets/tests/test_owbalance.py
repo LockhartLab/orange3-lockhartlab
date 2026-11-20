@@ -9,8 +9,8 @@ from Orange.widgets.tests.base import WidgetTest
 
 from Orange.widgets.evaluate.owtestandscore import OWTestAndScore
 
-from orangecontrib.seqprops.balance import Balance, BalancedLearner, balanced_rows, DOWN, UP
-from orangecontrib.seqprops.widgets.owbalance import OWBalance
+from orangecontrib.lockhartlab.balance import Balance, BalancedLearner, balanced_rows, DOWN, UP
+from orangecontrib.lockhartlab.widgets.owbalance import OWBalance
 
 
 def imbalanced(n_small=30, n_large=90, seed=0):

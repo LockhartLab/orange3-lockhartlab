@@ -6,7 +6,7 @@ from Orange.widgets.settings import Setting
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
 from Orange.widgets.widget import Input, Output
 
-from orangecontrib.seqprops.balance import Balance, BalancedLearner, DOWN, UP, METHOD_NAMES
+from orangecontrib.lockhartlab.balance import Balance, BalancedLearner, DOWN, UP, METHOD_NAMES
 
 METHOD_LABELS = {DOWN: "Downsample the larger class",
                  UP: "Upsample the smaller class"}
@@ -14,6 +14,8 @@ METHOD_LABELS = {DOWN: "Downsample the larger class",
 
 class OWBalance(OWBaseLearner):
     name = "Balance"
+    # Lets workflows saved before the package was renamed still open.
+    replaces = ["orangecontrib.seqprops.widgets.owbalance.OWBalance"]
     description = ("Train models on class-balanced data: wrap one model, or "
                    "connect the Preprocessor output to Test & Score to balance "
                    "every model there. Only training data is resampled.")

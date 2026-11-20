@@ -6,8 +6,8 @@ from Orange.widgets.settings import ContextSetting, DomainContextHandler, Settin
 from Orange.widgets.utils.itemmodels import VariableListModel
 from Orange.widgets.widget import Input, Msg, Output, OWWidget
 
-from orangecontrib.seqprops import kmers as km
-from orangecontrib.seqprops.widgets.owsequenceproperties import sequence_columns
+from orangecontrib.lockhartlab import kmers as km
+from orangecontrib.lockhartlab import properties as sp
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +18,8 @@ MANY_COLUMNS = 10000
 
 class OWKmers(OWWidget):
     name = "K-mer Bag of Words"
+    # Lets workflows saved before the package was renamed still open.
+    replaces = ["orangecontrib.seqprops.widgets.owkmers.OWKmers"]
     description = ("Count the k-mers (overlapping substrings of length k) "
                    "in protein or DNA/RNA sequences: one column per k-mer.")
     icon = "icons/Kmers.svg"
@@ -83,15 +85,15 @@ class OWKmers(OWWidget):
         self.Error.no_sequence_column.clear()
         self.data = data
         self.sequence_var = None
-        candidates = sequence_columns(data.domain) if data is not None else []
+        candidates = sp.sequence_columns(data.domain) if data is not None else []
         self.var_model[:] = candidates
         if data is not None:
             if not candidates:
                 self.Error.no_sequence_column()
                 self.data = None
             else:
-                named = [v for v in candidates if "seq" in v.name.lower()]
-                self.sequence_var = (named or candidates)[0]
+                self.sequence_var = (sp.default_sequence_column(data.domain)
+                                     or candidates[0])
                 self.openContext(data.domain)
         self.commit.now()
 
@@ -110,16 +112,11 @@ class OWKmers(OWWidget):
     def _output(self):
         if self.data is None or self.sequence_var is None:
             return None
-        sequences = km.sequence_values(self.data, self.sequence_var)
-        kmers = km.observed_kmers(sequences, self.k_from, self.k_to)
-        if len(kmers) > MANY_COLUMNS:
-            self.Warning.many_columns(len(kmers))
-        domain = self.data.domain
-        new_vars = km.kmer_variables(self.sequence_var, kmers,
-                                     bool(self.frequencies), domain)
-        out = self.data.transform(
-            Domain(domain.attributes + tuple(new_vars), domain.class_vars, domain.metas))
-        out.name = self.data.name
+        out = km.add_kmer_columns(self.data, self.sequence_var, self.k_from,
+                                  self.k_to, bool(self.frequencies))
+        n_kmers = len(out.domain.attributes) - len(self.data.domain.attributes)
+        if n_kmers > MANY_COLUMNS:
+            self.Warning.many_columns(n_kmers)
         return out
 
     def send_report(self):

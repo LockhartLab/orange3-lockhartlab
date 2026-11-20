@@ -1,23 +1,25 @@
 """Integration regressions for derived sequence features and evaluation.
 
 Run with QT_QPA_PLATFORM=offscreen python -m unittest \
-    orangecontrib.seqprops.widgets.tests.test_regressions
+    orangecontrib.lockhartlab.widgets.tests.test_regressions
 """
 
 import pickle
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from Orange.classification import LogisticRegressionLearner
+from Orange.classification import LogisticRegressionLearner, SVMLearner
 from Orange.data import ContinuousVariable, DiscreteVariable, Domain, StringVariable, Table
 from Orange.evaluation import Recall
 from Orange.widgets.tests.base import WidgetTest
 
-from orangecontrib.seqprops import featuresets as fs
-from orangecontrib.seqprops.widgets.owcomparefeaturesets import OWCompareFeatureSets
-from orangecontrib.seqprops.widgets.owsequenceproperties import (
+from orangecontrib.lockhartlab import featuresets as fs, kmers as km, properties as sp
+from orangecontrib.lockhartlab.descriptors import DescriptorTable, descriptor_variables
+from orangecontrib.lockhartlab.widgets.owcomparefeaturesets import OWCompareFeatureSets
+from orangecontrib.lockhartlab.widgets.owsequenceproperties import (
     OWSequenceProperties, PROTEIN, NUCLEOTIDE)
 
 
@@ -170,6 +172,74 @@ class TestCompareFeatureSetsRegressions(WidgetTest):
                 self.assertTrue(self.widget.Error.too_many_folds.is_shown())
                 self.assertTrue(self.widget.Warning.missing_targets.is_shown())
                 self.assertIsNone(self.get_output(self.widget.Outputs.evaluations_results))
+
+
+class TestSharedSequenceComputation(unittest.TestCase):
+    """SVM wraps every feature column again (normalization), which made
+    Orange recompute all k-mers or properties once per column."""
+
+    def setUp(self):
+        letters = "ACDEFGHIKLMNPQRSTVWY"
+        self.data = sequence_table(
+            [letters[i % 7:] + letters[:i % 5] for i in range(30)])
+        self.sequence_var = self.data.domain["sequence"]
+
+    def features(self, variables):
+        domain = self.data.domain
+        return self.data.transform(
+            Domain(tuple(variables), domain.class_vars, domain.metas))
+
+    def assert_computed_once_by_svm(self, table_class, variables):
+        training = self.features(variables)
+        model = SVMLearner()(training)
+        calls = []
+        original = table_class.compute
+
+        def counted(table, sequences):
+            calls.append(len(sequences))
+            return original(table, sequences)
+
+        with patch.object(table_class, "compute", counted):
+            predicted = model(self.data[:10])
+        self.assertEqual(len(calls), 1)
+        np.testing.assert_array_equal(predicted, model(training[:10]))
+
+    def test_svm_predictions_count_kmers_once(self):
+        sequences = km.sequence_values(self.data, self.sequence_var)
+        kmers = km.observed_kmers(sequences, 1, 2)
+        self.assert_computed_once_by_svm(
+            km.KmerTable,
+            km.kmer_variables(self.sequence_var, kmers, True, self.data.domain))
+
+    def test_svm_predictions_compute_properties_once(self):
+        self.assert_computed_once_by_svm(
+            DescriptorTable,
+            descriptor_variables(self.sequence_var, sp.PROTEIN, self.data.domain))
+
+    def test_changed_sequences_are_recomputed(self):
+        sequences = km.sequence_values(self.data, self.sequence_var)
+        variables = km.kmer_variables(
+            self.sequence_var, km.observed_kmers(sequences, 1, 1), False,
+            self.data.domain)
+        table = variables[0].compute_value.compute_shared
+        first = table(self.data[:2])
+        second = table(sequence_table(["AAAA", "CC"]))
+        self.assertFalse(np.array_equal(first, second))
+        np.testing.assert_array_equal(
+            second[:, variables.index(next(v for v in variables if v.name == "A"))],
+            [4, 0])
+
+    def test_saved_models_do_not_keep_the_cache(self):
+        sequences = km.sequence_values(self.data, self.sequence_var)
+        variables = km.kmer_variables(
+            self.sequence_var, km.observed_kmers(sequences, 1, 1), True,
+            self.data.domain)
+        table = variables[0].compute_value.compute_shared
+        table(self.data)
+        restored = pickle.loads(pickle.dumps(table))
+        self.assertIsNone(restored._last)
+        self.assertEqual(restored, table)
+        self.assertEqual(hash(restored), hash(table))
 
 
 if __name__ == "__main__":

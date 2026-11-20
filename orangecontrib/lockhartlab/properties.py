@@ -4,6 +4,7 @@ import numpy as np
 from Bio.SeqUtils import gc_fraction, molecular_weight
 from Bio.SeqUtils import MeltingTemp as mt
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
+from Orange.data import DiscreteVariable, StringVariable
 
 PROTEIN, NUCLEOTIDE = "protein", "nucleotide"
 
@@ -39,6 +40,26 @@ def clean(seq):
 
 def looks_like_sequence(seq):
     return bool(seq) and set(seq) <= SEQUENCE_LETTERS
+
+
+def sequence_columns(domain):
+    """Text columns, plus categorical columns whose values all look like
+    sequences (so class labels such as 'Iris-setosa' are not offered)."""
+    text = [v for v in domain.metas if isinstance(v, StringVariable)]
+    categorical = [v for v in domain.variables + domain.metas
+                   if isinstance(v, DiscreteVariable)
+                   and all(looks_like_sequence(clean(x)) for x in v.values)]
+    return text + categorical
+
+
+def default_sequence_column(domain):
+    """The column to use when none is chosen: the first one with 'seq' in
+    its name, else the first candidate; None if there is none. Never the
+    class column: features computed from the target would leak it."""
+    candidates = [v for v in sequence_columns(domain)
+                  if v not in domain.class_vars]
+    named = [v for v in candidates if "seq" in v.name.lower()]
+    return (named or candidates or [None])[0]
 
 
 def detect_type(sequences):

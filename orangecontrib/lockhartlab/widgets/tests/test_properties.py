@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from orangecontrib.seqprops import properties as sp
+from orangecontrib.lockhartlab import properties as sp
 
 
 def dna(seq, group):

@@ -182,12 +182,12 @@ points to the newest release.
     python -m build --wheel --outdir dist .
     python -m pip install dist/*.whl PyQt6 PyQt6-WebEngine
     QT_QPA_PLATFORM=offscreen python -m unittest \
-        orangecontrib.seqprops.widgets.tests.test_properties \
-        orangecontrib.seqprops.widgets.tests.test_owsequenceproperties \
-        orangecontrib.seqprops.widgets.tests.test_owbalance \
-        orangecontrib.seqprops.widgets.tests.test_owkmers \
-        orangecontrib.seqprops.widgets.tests.test_owcomparefeaturesets \
-        orangecontrib.seqprops.widgets.tests.test_regressions
+        orangecontrib.lockhartlab.widgets.tests.test_properties \
+        orangecontrib.lockhartlab.widgets.tests.test_owsequenceproperties \
+        orangecontrib.lockhartlab.widgets.tests.test_owbalance \
+        orangecontrib.lockhartlab.widgets.tests.test_owkmers \
+        orangecontrib.lockhartlab.widgets.tests.test_owcomparefeaturesets \
+        orangecontrib.lockhartlab.widgets.tests.test_regressions
 
 ## License
 

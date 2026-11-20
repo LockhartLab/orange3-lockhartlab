@@ -15,7 +15,7 @@ from Orange.widgets.utils.concurrent import ConcurrentWidgetMixin, TaskState
 from Orange.widgets.widget import Input, MultiInput, Output
 from Orange.widgets.widget import Msg, OWWidget
 
-from orangecontrib.seqprops import featuresets as fs
+from orangecontrib.lockhartlab import featuresets as fs
 
 log = logging.getLogger(__name__)
 
@@ -32,6 +32,8 @@ def run(tables, learners, preprocessor, k, stratified, state: TaskState):
 
 class OWCompareFeatureSets(OWWidget, ConcurrentWidgetMixin):
     name = "Compare Feature Sets"
+    # Lets workflows saved before the package was renamed still open.
+    replaces = ["orangecontrib.seqprops.widgets.owcomparefeaturesets.OWCompareFeatureSets"]
     description = ("Cross-validate every model on every feature set "
                    "(for example several Select Columns) and score them in one table.")
     icon = "icons/CompareFeatureSets.svg"

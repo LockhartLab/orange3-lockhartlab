@@ -10,8 +10,9 @@ from Orange.widgets.settings import ContextSetting, DomainContextHandler, Settin
 from Orange.widgets.utils.itemmodels import VariableListModel
 from Orange.widgets.widget import Input, Msg, Output, OWWidget
 
-from orangecontrib.seqprops import properties as sp
-from orangecontrib.seqprops.descriptors import descriptor_variables
+from orangecontrib.lockhartlab import properties as sp
+from orangecontrib.lockhartlab.properties import sequence_columns
+from orangecontrib.lockhartlab.descriptors import descriptor_variables
 
 log = logging.getLogger(__name__)
 
@@ -24,16 +25,6 @@ KINDS = {PROTEIN: sp.PROTEIN, NUCLEOTIDE: sp.NUCLEOTIDE}
 MAX_NON_NUCLEOTIDE = 0.1
 
 
-def sequence_columns(domain):
-    """Text columns, plus categorical columns whose values all look like
-    sequences (so class labels such as 'Iris-setosa' are not offered)."""
-    text = [v for v in domain.metas if isinstance(v, StringVariable)]
-    categorical = [v for v in domain.variables + domain.metas
-                   if isinstance(v, DiscreteVariable)
-                   and all(sp.looks_like_sequence(sp.clean(x)) for x in v.values)]
-    return text + categorical
-
-
 def _rows(indices, limit=5):
     """1-based row numbers, as the Data Table shows them."""
     shown = ", ".join(str(i + 1) for i in indices[:limit])
@@ -42,6 +33,8 @@ def _rows(indices, limit=5):
 
 class OWSequenceProperties(OWWidget):
     name = "Simple Sequence Properties"
+    # Lets workflows saved before the package was renamed still open.
+    replaces = ["orangecontrib.seqprops.widgets.owsequenceproperties.OWSequenceProperties"]
     description = ("Compute physicochemical properties (molecular weight, pI, "
                    "hydropathy, GC content, CpG ratio, ...) of protein or "
                    "DNA/RNA sequences.")
@@ -131,8 +124,8 @@ class OWSequenceProperties(OWWidget):
                 self.Error.no_sequence_column()
                 self.data = None
             else:
-                named = [v for v in candidates if "seq" in v.name.lower()]
-                self.sequence_var = (named or candidates)[0]
+                self.sequence_var = (sp.default_sequence_column(data.domain)
+                                     or candidates[0])
                 self.openContext(data.domain)
         self.commit.now()
 

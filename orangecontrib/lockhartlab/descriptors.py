@@ -3,31 +3,29 @@
 from Orange.data import ContinuousVariable
 from Orange.data.util import SharedComputeValue, get_unique_names
 
-from orangecontrib.seqprops import properties as sp
-from orangecontrib.seqprops.kmers import sequence_values
+from orangecontrib.lockhartlab import properties as sp
+from orangecontrib.lockhartlab.kmers import SequenceTable
 
 
-class DescriptorTable:
+class DescriptorTable(SequenceTable):
     """Compute all descriptors together, once per transformed table."""
 
+    InheritEq = True  # equality and hashing come from SequenceTable
+
     def __init__(self, sequence_var, kind):
-        self.sequence_var = sequence_var
+        super().__init__(sequence_var)
         self.kind = kind
 
-    def __call__(self, data):
+    def input_var(self, data):
         # Use the incoming vocabulary before unseen categorical sequences
         # are mapped to missing values in the training variable's vocabulary.
         try:
-            sequence_var = data.domain[self.sequence_var.name]
+            return data.domain[self.sequence_var.name]
         except KeyError:
-            sequence_var = self.sequence_var
-        return sp.compute(sequence_values(data, sequence_var), self.kind)[1]
+            return self.sequence_var
 
-    def __eq__(self, other):
-        return type(self) is type(other) and self._key() == other._key()
-
-    def __hash__(self):
-        return hash(self._key())
+    def compute(self, sequences):
+        return sp.compute(sequences, self.kind)[1]
 
     def _key(self):
         return self.sequence_var, self.kind

@@ -5,7 +5,7 @@ import numpy as np
 from Orange.data import Domain, DiscreteVariable, StringVariable, Table
 from Orange.widgets.tests.base import WidgetTest
 
-from orangecontrib.seqprops.widgets.owsequenceproperties import (
+from orangecontrib.lockhartlab.widgets.owsequenceproperties import (
     OWSequenceProperties, NOT_CHOSEN, PROTEIN, NUCLEOTIDE)
 
 # Protein with threonine (T) and selenocysteine (U): read as DNA, it used to
@@ -126,7 +126,7 @@ class TestOWSequenceProperties(WidgetTest):
 
     def test_unexpected_errors_are_shown_not_raised(self):
         self.send_signal(self.widget.Inputs.data, make_table(["MKV", "ACD"]))
-        with patch("orangecontrib.seqprops.properties.compute",
+        with patch("orangecontrib.lockhartlab.properties.compute",
                    side_effect=RuntimeError("boom")):
             self.choose(PROTEIN)
         self.assertTrue(self.widget.Error.unexpected.is_shown())

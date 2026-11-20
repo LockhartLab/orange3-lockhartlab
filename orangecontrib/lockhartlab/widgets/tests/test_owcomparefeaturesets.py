@@ -7,9 +7,9 @@ from Orange.data import Domain, ContinuousVariable, DiscreteVariable, Table
 from Orange.evaluation import AUC, CrossValidation, Recall
 from Orange.widgets.tests.base import WidgetTest
 
-from orangecontrib.seqprops import featuresets as fs
-from orangecontrib.seqprops.balance import Balance, UP
-from orangecontrib.seqprops.widgets.owcomparefeaturesets import OWCompareFeatureSets
+from orangecontrib.lockhartlab import featuresets as fs
+from orangecontrib.lockhartlab.balance import Balance, UP
+from orangecontrib.lockhartlab.widgets.owcomparefeaturesets import OWCompareFeatureSets
 
 
 def data(seed=0):

@@ -23,14 +23,14 @@ Homepage = "https://github.com/LockhartLab/orange3-lockhartlab"
 Download = "https://github.com/LockhartLab/orange3-lockhartlab/releases/latest"
 
 [project.entry-points."orange3.addon"]
-seqprops = "orangecontrib.seqprops"
+lockhartlab = "orangecontrib.lockhartlab"
 
 [project.entry-points."orange.widgets"]
-"Lockhart Lab" = "orangecontrib.seqprops.widgets"
+"Lockhart Lab" = "orangecontrib.lockhartlab.widgets"
 
 [tool.setuptools.packages.find]
 include = ["orangecontrib*"]
 namespaces = true
 
 [tool.setuptools.package-data]
-"orangecontrib.seqprops.widgets" = ["icons/*.svg"]
+"orangecontrib.lockhartlab.widgets" = ["icons/*.svg"]

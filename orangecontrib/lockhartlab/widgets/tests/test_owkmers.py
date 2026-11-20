@@ -5,8 +5,8 @@ import numpy as np
 from Orange.data import Domain, DiscreteVariable, StringVariable, Table
 from Orange.widgets.tests.base import WidgetTest
 
-from orangecontrib.seqprops import kmers as km
-from orangecontrib.seqprops.widgets.owkmers import OWKmers
+from orangecontrib.lockhartlab import kmers as km
+from orangecontrib.lockhartlab.widgets.owkmers import OWKmers
 
 
 def make_table(seqs, name="sequence"):
@@ -99,3 +99,4 @@ class TestOWKmers(WidgetTest):
         self.send_signal(self.widget.Inputs.data, self.output())
         names = [v.name for v in self.output().domain.attributes]
         self.assertEqual(len(names), len(set(names)))
+
