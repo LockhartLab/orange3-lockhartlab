@@ -25,7 +25,7 @@ If you don't have Orange yet, download it from
 Go to the
 [**latest release**](https://github.com/LockhartLab/orange3-lockhartlab/releases/latest)
 page. Under **Assets**, click the file whose name ends in **`.whl`**
-(for example `orange3_lockhartlab-0.12.0-py3-none-any.whl`).
+(for example `orange3_lockhartlab-0.12.1-py3-none-any.whl`).
 Don't rename it.
 
 **2. Open the Add-ons window.**
@@ -92,6 +92,12 @@ Connect **File → K-mer Bag of Words**. Set the range of **k** (for example
 in the sequence, so long and short sequences compare fairly). There is one
 column for each k-mer that occurs in the data. Any letters are counted, so
 it works the same for protein, DNA and RNA.
+
+Check **Include k-mers that never occur** to get a column for every
+possible k-mer (20ᵏ for proteins, 4ᵏ for DNA/RNA), with 0 where it is
+absent. The columns then depend only on k, not on which sequences are in
+the data, so different datasets get the same columns. Keep k small: for
+proteins, k = 3 already gives 8,000 columns.
 
 New data sent through the same workflow (for example a test file going to
 **Predictions**) gets the same k-mer columns.

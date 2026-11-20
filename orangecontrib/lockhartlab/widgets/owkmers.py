@@ -35,6 +35,8 @@ class OWKmers(OWWidget):
     class Error(OWWidget.Error):
         no_sequence_column = Msg("Input has no text column with sequences.")
         unexpected = Msg("Something went wrong: {}")
+        too_many = Msg("All possible k-mers would make {:,} columns (at most "
+                       "{:,}). Use a smaller k, or only k-mers that occur.")
 
     class Warning(OWWidget.Warning):
         many_columns = Msg("{} k-mer columns; Orange may be slow. "
@@ -45,6 +47,7 @@ class OWKmers(OWWidget):
     k_from = Setting(1)
     k_to = Setting(2)
     frequencies = Setting(True)
+    include_absent = Setting(False)
     auto_commit = Setting(True)
 
     want_main_area = False
@@ -68,6 +71,12 @@ class OWKmers(OWWidget):
         gui.radioButtons(box, self, "frequencies",
                          ["Counts", "Frequencies (count ÷ number of k-mers)"],
                          callback=self.commit.deferred)
+        gui.checkBox(box, self, "include_absent",
+                     "Include k-mers that never occur (all 20ᵏ or 4ᵏ)",
+                     tooltip="One column for every possible k-mer of the 20 "
+                             "amino acids (or ACGT / ACGU), even if it never "
+                             "occurs, so the columns are the same for any data.",
+                     callback=self.commit.deferred)
 
         gui.auto_apply(self.buttonsArea, self, "auto_commit")
 
@@ -101,6 +110,7 @@ class OWKmers(OWWidget):
     def commit(self):
         self.Warning.clear()
         self.Error.unexpected.clear()
+        self.Error.too_many.clear()
         try:
             out = self._output()
         except Exception as ex:  # show the problem in the widget, never crash
@@ -112,8 +122,15 @@ class OWKmers(OWWidget):
     def _output(self):
         if self.data is None or self.sequence_var is None:
             return None
+        if self.include_absent:
+            letters = km.alphabet(km.sequence_values(self.data, self.sequence_var))
+            n = km.n_possible_kmers(letters, self.k_from, self.k_to)
+            if n > km.MAX_ALL_KMERS:
+                self.Error.too_many(n, km.MAX_ALL_KMERS)
+                return None
         out = km.add_kmer_columns(self.data, self.sequence_var, self.k_from,
-                                  self.k_to, bool(self.frequencies))
+                                  self.k_to, bool(self.frequencies),
+                                  self.include_absent)
         n_kmers = len(out.domain.attributes) - len(self.data.domain.attributes)
         if n_kmers > MANY_COLUMNS:
             self.Warning.many_columns(n_kmers)
@@ -126,6 +143,7 @@ class OWKmers(OWWidget):
             ("Sequence column", self.sequence_var.name),
             ("k", f"{self.k_from} to {self.k_to}"),
             ("Values", "frequencies" if self.frequencies else "counts"),
+            ("K-mers", "all possible" if self.include_absent else "those that occur"),
         ))
 
 

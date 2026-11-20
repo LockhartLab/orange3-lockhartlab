@@ -100,3 +100,55 @@ class TestOWKmers(WidgetTest):
         names = [v.name for v in self.output().domain.attributes]
         self.assertEqual(len(names), len(set(names)))
 
+
+class TestAllKmers(unittest.TestCase):
+    def test_alphabets(self):
+        self.assertEqual(km.alphabet(["MKVLA"]), "ACDEFGHIKLMNPQRSTVWY")
+        self.assertEqual(km.alphabet(["ACGTN"]), "ACGT")
+        self.assertEqual(km.alphabet(["ACGU"]), "ACGU")
+
+    def test_all_kmers_for_dna(self):
+        kmers = km.kmer_vocabulary(["AAAA"], 1, 2, include_absent=True)
+        self.assertEqual(len(kmers), 4 + 16)
+        self.assertEqual(kmers[:5], ["A", "C", "G", "T", "AA"])
+        self.assertEqual(km.kmer_vocabulary(["AAAA"], 1, 2), ["A", "AA"])
+
+    def test_same_columns_for_any_proteins(self):
+        a = km.kmer_vocabulary(["MKV"], 2, 2, include_absent=True)
+        b = km.kmer_vocabulary(["WWW", "ACD"], 2, 2, include_absent=True)
+        self.assertEqual(a, b)
+        self.assertEqual(len(a), 400)
+
+    def test_unusual_letters_that_occur_are_kept(self):
+        kmers = km.kmer_vocabulary(["MKXV"], 1, 1, include_absent=True)
+        self.assertEqual(len(kmers), 21)
+        self.assertIn("X", kmers)
+
+    def test_too_many(self):
+        with self.assertRaisesRegex(ValueError, "160,000 columns"):
+            km.kmer_vocabulary(["MKV"], 4, 4, include_absent=True)
+
+
+class TestOWKmersAllKmers(WidgetTest):
+    def setUp(self):
+        self.widget = self.create_widget(OWKmers)
+
+    def test_checkbox_adds_absent_kmers_with_zero(self):
+        self.send_signal(self.widget.Inputs.data, make_table(["ACGT", "AAGG"]))
+        self.widget.controls.k_from.setValue(2)
+        self.widget.controls.k_to.setValue(2)
+        self.assertEqual(len(self.get_output(self.widget.Outputs.data).domain.attributes), 6)
+        self.widget.controls.include_absent.click()
+        out = self.get_output(self.widget.Outputs.data)
+        self.assertEqual(len(out.domain.attributes), 16)
+        self.assertEqual(out.get_column("TT").tolist(), [0, 0])
+
+    def test_too_many_columns_error(self):
+        self.send_signal(self.widget.Inputs.data, make_table(["MKVLAW", "GIGKFL"]))
+        self.widget.controls.include_absent.click()
+        self.widget.controls.k_to.setValue(4)
+        self.assertTrue(self.widget.Error.too_many.is_shown())
+        self.assertIsNone(self.get_output(self.widget.Outputs.data))
+        self.widget.controls.include_absent.click()
+        self.assertFalse(self.widget.Error.too_many.is_shown())
+        self.assertIsNotNone(self.get_output(self.widget.Outputs.data))

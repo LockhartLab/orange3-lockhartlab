@@ -7,6 +7,7 @@ the same columns, computed from its own sequence column.
 """
 
 from collections import Counter
+from itertools import product
 
 import numpy as np
 
@@ -154,6 +155,42 @@ def observed_kmers(sequences, k_from, k_to):
             for kmer in sorted(set().union(*(count_kmers(s, k) for s in sequences)))]
 
 
+# Listing every possible k-mer above this many columns is refused.
+MAX_ALL_KMERS = 100_000
+
+
+def alphabet(sequences):
+    """The standard letters of the sequences: the 20 amino acids for
+    proteins, ACGT for DNA, or ACGU for RNA (U and no T)."""
+    if sp.detect_type(sequences) == sp.PROTEIN:
+        return sp.AMINO_ACIDS
+    letters = set("".join(sequences))
+    return "ACGU" if "U" in letters and "T" not in letters else "ACGT"
+
+
+def n_possible_kmers(letters, k_from, k_to):
+    return sum(len(letters) ** k for k in range(k_from, k_to + 1))
+
+
+def kmer_vocabulary(sequences, k_from, k_to, include_absent=False):
+    """The k-mer columns, shortest first, then A-Z. Normally the k-mers that
+    occur in `sequences`; with `include_absent`, every k-mer of the standard
+    alphabet as well, so the columns do not depend on which sequences are
+    in the data. K-mers with other letters (such as X) that occur are kept."""
+    observed = observed_kmers(sequences, k_from, k_to)
+    if not include_absent:
+        return observed
+    letters = alphabet(sequences)
+    n = n_possible_kmers(letters, k_from, k_to)
+    if n > MAX_ALL_KMERS:
+        raise ValueError(f"all k-mers would make {n:,} columns; "
+                         f"use a smaller k (at most {MAX_ALL_KMERS:,}).")
+    kmers = set(observed)
+    for k in range(k_from, k_to + 1):
+        kmers.update("".join(p) for p in product(letters, repeat=k))
+    return sorted(kmers, key=lambda kmer: (len(kmer), kmer))
+
+
 def kmer_variables(sequence_var, kmers, frequencies, domain):
     """One variable per k-mer; names that clash with `domain` get a suffix."""
     table = KmerTable(sequence_var, kmers, frequencies)
@@ -162,9 +199,11 @@ def kmer_variables(sequence_var, kmers, frequencies, domain):
             for j, name in enumerate(names)]
 
 
-def add_kmer_columns(data, sequence_var, k_from, k_to, frequencies):
-    """`data` with one column added per k-mer that occurs in its sequences."""
-    kmers = observed_kmers(sequence_values(data, sequence_var), k_from, k_to)
+def add_kmer_columns(data, sequence_var, k_from, k_to, frequencies,
+                     include_absent=False):
+    """`data` with one column added per k-mer (see `kmer_vocabulary`)."""
+    kmers = kmer_vocabulary(sequence_values(data, sequence_var), k_from, k_to,
+                            include_absent)
     domain = data.domain
     new_vars = kmer_variables(sequence_var, kmers, frequencies, domain)
     out = data.transform(Domain(domain.attributes + tuple(new_vars),
